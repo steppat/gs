@@ -2,6 +2,7 @@
 
 import subprocess
 import re
+from datetime import datetime
 
 class Comando:
 	p = None
@@ -81,24 +82,31 @@ class CommitsFactory:
 	def __clean_msg(self,rawMsg):
 		return rawMsg[0:len(rawMsg)-1] 
 	
+	def __parse_date(self, date):
+		#ignoring timezone, python does not recognize %z option
+		return datetime.strptime(date[0:19], "%Y-%m-%d %H:%M:%S")
+
+
 	def create_commit(self, commitString, statsString):
 		commitValues=commitString.split('|')
 		commitStats=CommitStats.create(statsString)
+
 		return Commit(
-			shaHash = self.__clean_hash(commitValues[0]),
-			mensagem = self.__clean_msg(commitValues[7]), 
-			autor = Pessoa(nome=commitValues[1], email=commitValues[2]), 
-			autorData = commitValues[3], 
-			committer = Pessoa(nome=commitValues[4], email=commitValues[5]), 
-			commitData = commitValues[6],
+			shaHash     = self.__clean_hash(commitValues[0]),
+			mensagem    = self.__clean_msg(commitValues[7]), 
+			autor       = Pessoa(nome=commitValues[1], email=commitValues[2]), 
+			autorData   = self.__parse_date(commitValues[3]), 
+			committer   = Pessoa(nome=commitValues[4], email=commitValues[5]), 
+			commitData  = self.__parse_date(commitValues[6]),
 			commitStats = commitStats)
 
-	def git_log_as_array(self):
+
+	def git_log(self):
 		comando = Comando(['git', 'log', '--pretty=format:"%H|%an|%ae|%ai|%cn|%ce|%ci|%s"', "--shortstat", "--no-merges"])
 		return comando.saida().splitlines();
 
 	def commits_from_git_log(self):
-		logLines = self.git_log_as_array()
+		logLines = self.git_log()
 
 		commits = list()
 
@@ -116,6 +124,6 @@ class CommitsFactory:
 		return commits
 
 for commit in CommitsFactory().commits_from_git_log():
-	print "Msg: %s" % (commit.mensagem)
+	print "Msg: %s" % (commit.autorData)
 
 	
