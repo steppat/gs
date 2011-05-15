@@ -1,8 +1,13 @@
 #! /usr/bin/env python
+# coding=iso-8859-1
 
+import sys
+import getopt
 import subprocess
 import re
 from datetime import datetime
+
+
 
 class Comando:
 	p = None
@@ -35,24 +40,32 @@ class Pessoa:
 
 
 class CommitStats:
-	qtdFiles=None
-	insercoes=None
-	remocoes=None
+	arquivos=None #quantidade de arquivos
+	insercoes=None #quantidade de insercoes
+	remocoes=None #quantidade de remocoes
 
-	def __init__(self, qtdFiles, insercoes, remocoes):
-		self.qtdFiles=qtdFiles
+	def __init__(self, arquivos, insercoes, remocoes):
+		self.arquivos=arquivos
 		self.insercoes=insercoes
 		self.remocoes=remocoes
 
 	def create(statsString):
 		statsValues=statsString.split(',')
 		return CommitStats(
-			qtdFiles=int(re.search("\d*",statsValues[0].strip()).group(0)),
+			arquivos=int(re.search("\d*",statsValues[0].strip()).group(0)),
 			insercoes=int(re.search("\d*",statsValues[1].strip()).group(0)),
 			remocoes=int(re.search("\d*",statsValues[2].strip()).group(0)))
 
 	def total_modificado(self):
-		return self.insercoes + (self.remocoes * -1)
+		return self.insercoes + self.remocoes
+
+	
+	def __str__(self):
+		return "Arquivos totais: %d, Modificoes totais %d (+%d,-%d)" % (
+			self.arquivos, 
+			self.total_modificado(), 
+			self.insercoes,
+			self.remocoes)
 
 	create = staticmethod(create)
 
@@ -136,16 +149,49 @@ class CommitsFactory:
 
 #fitler todos os autores que comecam com o nomeAutor
 def filter_commits_by_autor_name(commits, nomeAutor):
-	return [commit for commit in commits if nomeAutor.lower() <= commit.autor.nome.lower()]
+	return [commit for commit in commits if commit.autor.nome.lower().startswith(nomeAutor.lower())]
 
+def soma_commits_stats(commits):
+	total_arquivos = 0
+	total_insercoes = 0
+	total_remocoes = 0
+	for commit in commits:
+			total_arquivos  += commit.commitStats.arquivos
+			total_insercoes += commit.commitStats.insercoes
+			total_remocoes  += commit.commitStats.remocoes
+	return CommitStats(total_arquivos, total_insercoes, total_remocoes);
 
 def main():
-	commits = CommitsFactory().commits_from_git_log()
-	commits = filter_commits_by_autor_name(commits,'nico')
-	print commits
-	for commit in commits:
-		print "Msg: %s %d" % (commit.autor.nome, commit.commitStats.insercoes )
+	# parse command line options
+	try:
+		opts, args = getopt.getopt(sys.argv[1:], "h", ["help"])
+	except getopt.error, msg:
+		print msg
+		print "for help use --help"
+		sys.exit(2)
+	# process options
+	for o, a in opts:
+		if o in ("-h", "--help"):
+			print __doc__
+			sys.exit(0)
+    	# process arguments
+    	print args # process() is defined elsewhere
 
+	nome='sérgio'
+	commits = CommitsFactory().commits_from_git_log()
+	commits = filter_commits_by_autor_name(commits, nome)
+	soma = soma_commits_stats(commits)
+	"""
+	for commit in commits:
+		print "Msg: %s, Autor: %s [Files: %d, Changes: %d (%d,%d)]" % (
+			commit.mensagem, 
+			commit.autor.nome,
+			commit.commitStats.arquivos, 
+			commit.commitStats.total_modificado(), 
+			commit.commitStats.insercoes, 
+			commit.commitStats.remocoes )
+	"""
+	print"Autor: %s, Commits: %d, %s" % (nome, len(commits), soma)
 
 if __name__ == '__main__':
 	main()
