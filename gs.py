@@ -30,6 +30,10 @@ class Pessoa:
 		self.nome = nome
 		self.email = email
 
+	def __str__(self):
+		return "%s, %s" % (self.nome, self.email)
+
+
 class CommitStats:
 	qtdFiles=None
 	insercoes=None
@@ -47,7 +51,7 @@ class CommitStats:
 			insercoes=int(re.search("\d*",statsValues[1].strip()).group(0)),
 			remocoes=int(re.search("\d*",statsValues[2].strip()).group(0)))
 
-	def total_changed():
+	def total_modificado(self):
 		return self.insercoes + (self.remocoes * -1)
 
 	create = staticmethod(create)
@@ -101,8 +105,15 @@ class CommitsFactory:
 			commitStats = commitStats)
 
 
-	def git_log(self):
-		comando = Comando(['git', 'log', '--pretty=format:"%H|%an|%ae|%ai|%cn|%ce|%ci|%s"', "--shortstat", "--no-merges"])
+	def git_log(self, options=list()):
+		comandoArray = ['git', 
+				'log', 
+				'--pretty=format:"%H|%an|%ae|%ai|%cn|%ce|%ci|%s"', 
+				"--shortstat", 
+				"--no-merges"]
+		comandoArray.extend(options)
+		print "Executing: %s " % comandoArray
+		comando = Comando(comandoArray)
 		return comando.saida().splitlines();
 
 	def commits_from_git_log(self):
@@ -123,7 +134,19 @@ class CommitsFactory:
 		
 		return commits
 
-for commit in CommitsFactory().commits_from_git_log():
-	print "Msg: %s" % (commit.autorData)
+#fitler todos os autores que comecam com o nomeAutor
+def filter_commits_by_autor_name(commits, nomeAutor):
+	return [commit for commit in commits if nomeAutor.lower() <= commit.autor.nome.lower()]
 
+
+def main():
+	commits = CommitsFactory().commits_from_git_log()
+	commits = filter_commits_by_autor_name(commits,'nico')
+	print commits
+	for commit in commits:
+		print "Msg: %s %d" % (commit.autor.nome, commit.commitStats.insercoes )
+
+
+if __name__ == '__main__':
+	main()
 	
