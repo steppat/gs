@@ -6,7 +6,8 @@
 *.log
 *.pub
 *.swp
-FJ-29
+*.pyc
+
 git_key
 scripts/config.sh
 scripts/gera2.sh
