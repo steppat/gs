@@ -142,14 +142,14 @@ class CommitsFactory:
 				firstLine = logLines.pop()
 			secondLine = logLines.pop();
 			#print "CommitStats:  " + firstLine
-			#print "CommitString: " + secondLine
+			#print "CommitString: " + siecondLine
 			commits.append(self.create_commit(commitString=secondLine, statsString=firstLine))
 		
 		return commits
 
 #fitler todos os autores que comecam com o nomeAutor
-def filter_commits_by_autor_name(commits, nomeAutor):
-	return [commit for commit in commits if commit.autor.nome.lower().startswith(nomeAutor.lower())]
+def filter_commits_by_autor_name(commits, nome_autor):
+	return [commit for commit in commits if commit.autor.nome.lower().startswith(nome_autor.lower())]
 
 def soma_commits_stats(commits):
 	total_arquivos = 0
@@ -161,25 +161,39 @@ def soma_commits_stats(commits):
 			total_remocoes  += commit.commitStats.remocoes
 	return CommitStats(total_arquivos, total_insercoes, total_remocoes);
 
+
 def main():
+	"""
+		Programa executa git log para extrair infos sobre commits. 
+
+		Use --autor="Joao Silva"  ou -a Joao  para procurar por um autor 
+		especifico.
+
+		Autor: Nico Steppat
+	"""
 	# parse command line options
 	try:
-		opts, args = getopt.getopt(sys.argv[1:], "h", ["help"])
+		opts, args = getopt.getopt(sys.argv[1:], "ha:", ["help","autor="])
 	except getopt.error, msg:
 		print msg
 		print "for help use --help"
 		sys.exit(2)
+	
 	# process options
-	for o, a in opts:
-		if o in ("-h", "--help"):
-			print __doc__
+	nome_autor = None
+	for op, arg in opts:
+		if op in ("-h", "--help"):
+			print main.__doc__
 			sys.exit(0)
-    	# process arguments
-    	print args # process() is defined elsewhere
-
-	nome='sérgio'
+		if op in ("-a", "--autor" ):
+			#print "autor: %s " % arg
+			nome_autor = arg	
+	
 	commits = CommitsFactory().commits_from_git_log()
-	commits = filter_commits_by_autor_name(commits, nome)
+	
+	if nome_autor:
+		print "Filtrando pelo autor %s" % nome_autor
+		commits = filter_commits_by_autor_name(commits, nome_autor)
 	soma = soma_commits_stats(commits)
 	"""
 	for commit in commits:
@@ -191,7 +205,7 @@ def main():
 			commit.commitStats.insercoes, 
 			commit.commitStats.remocoes )
 	"""
-	print"Autor: %s, Commits: %d, %s" % (nome, len(commits), soma)
+	print"Autor: %s, Commits: %d, %s" % (nome_autor, len(commits), soma)
 
 if __name__ == '__main__':
 	main()
