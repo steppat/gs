@@ -1,0 +1,14 @@
+.project
+.classpath
+.DS_Store
+.settings
+*~
+*.log
+*.pub
+*.swp
+FJ-29
+git_key
+scripts/config.sh
+scripts/gera2.sh
+target
+cleanSpecialChars.sh
