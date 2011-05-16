@@ -61,7 +61,7 @@ class CommitStats:
 
 	
 	def __str__(self):
-		return "Arquivos totais: %d, Modificoes totais %d (+%d,-%d)" % (
+		return "Arquivos totais: %d, Modificoes totais: %d (+%d,-%d)" % (
 			self.arquivos, 
 			self.total_modificado(), 
 			self.insercoes,
@@ -71,7 +71,7 @@ class CommitStats:
 
 
 class Commit:
-	#sha_hash = None
+	sha_hash = None
 	#mensagem = None
 	#autor = None
 	#data_autor = None
@@ -90,7 +90,7 @@ class Commit:
 		self.commit_statistic = commit_statistic
 
 	def __str__(self):
-                return "%s, %s, %s, %s" % (self.sha_hash, self.mensagem, self.autor.nome, self.commit_statistic) 
+                return " %s, %s, %s" % (self.mensagem, self.autor.nome, self.commit_statistic) 
 
 
 class CommitsFactory:
@@ -169,7 +169,7 @@ def soma_commits_stats(commits):
 		last_commit = commit 
 
 	return Commit(
-		sha_hash     = last_commit.sha_hash,
+		sha_hash    = last_commit.sha_hash,
 		mensagem    = last_commit.mensagem, 
 		autor       = last_commit.autor, 
 		data_autor  = last_commit.data_autor, 
@@ -209,18 +209,53 @@ def main():
 			#print "data: %s " % arg
 			data = datetime.strptime(arg, "%d/%m/%Y")
 
+
+	#pega todos os commits do git log
 	commits = CommitsFactory().commits_from_git_log()
+	
+	#ordena commits pelo nome do autor
 	commits = sorted(commits, key=lambda commit: commit.autor.nome)
 	
-	if nome_autor:
-		print "Filtrando pelo autor %s" % nome_autor
-		commits = filter_commits_by_autor_name(commits, nome_autor)
 
+	#check se precisa filtrar pela data
 	if data:
 		print "Filtrando pela data %s" % data
 		commits = filter_commits_by_date(commits, data)
 
-	soma = soma_commits_stats(commits)
+	resultado = commits
+
+	#check se precisa filtrar pelo nome do autor
+	if nome_autor:
+		nomes = nome_autor.split(',')
+		for nome in nomes:
+			temp_list = list()
+			nome = nome.strip()
+			print "Filtrando pelo autor: %s %d" % (nome,len(nome))
+			temp_list = filter_commits_by_autor_name(commits, nome)
+			soma = None
+			if temp_list:
+				#print "somando "
+				soma = soma_commits_stats(temp_list)
+			else:
+				#print "criando default commit"
+				#criando empty commit
+				soma = Commit(
+					sha_hash = "", 
+					mensagem = "", 
+					autor    = Pessoa(nome,""),
+					data_autor  = "",
+					committer  = Pessoa(nome,""),
+					data_commit = "",
+					commit_statistic = CommitStats(0,0,0)
+					) 
+			resultado.append(soma)
+
+	resultado = sorted(resultado , key=lambda commit : commit.commit_statistic.total_modificado())
+
+	print "Total commits %d " % len(commits) 
+	for c in resultado:
+		print"Autor: %s, Stats: %s" % (c.autor.nome, c.commit_statistic)
+
 	"""
 	for commit in commits:
 		print "Autor: %s, Msg: %s [Files: %d, Changes: %d (%d,%d)]" % (
@@ -231,7 +266,6 @@ def main():
 			commit.commit_statistic.insercoes, 
 			commit.commit_statistic.remocoes )
 	"""
-	print"Commits: %d, %s" % (len(commits), soma)
 
 if __name__ == '__main__':
 	main()
