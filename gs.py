@@ -154,8 +154,8 @@ class CommitFactory:
 			print "analyzing: " + firstLine + ", " + str(len(firstLine))
 			while not firstLine: #check se a linha for vazia
 				print "skiped: " + firstLine
-				if not len(commits):#nao tem mais elementos
-					break;
+				if not len(self.log_linhas):#nao tem mais elementos
+					return list()
 				firstLine = self.log_linhas.pop()
 
 			secondLine = self.log_linhas.pop();
