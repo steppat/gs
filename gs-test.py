@@ -1,16 +1,62 @@
-import gs
+from gs import Pessoa
+from gs import CommitStats
+from gs import CommitFactory
+from gs import Commit
+from datetime import datetime
+
 import unittest
 
 
 class CommitStatsTest(unittest.TestCase):
 
-	def test_true(self):
-		self.assertEqual(1,1)
+	def test_commit_stats_somam_modificacoes(self):
+		cs = CommitStats(1,1,2,3)
+		self.assertEqual(5,cs.total_modificado())
 
-	def test_non_integer(self):                                        
-        	"""toRoman should fail with non-integer input"""             
-        	self.assertRaises(None)
 
+class CommitTest(unittest.TestCase):
+	def test_commit_soma_modificacoes(self):
+		pessoa = Pessoa("nico", "nico@nico.com")
+		date = datetime.strptime("01/05/2011 15:30:10", "%d/%m/%Y %H:%M:%S")
+		c = Commit(
+				sha_hash="3a4f5b", 
+				mensagem="initial commit", 
+				autor=pessoa, 
+				data_autor=date, 
+				committer=pessoa,
+				data_commit=date, 
+				arquivos=1, 
+				insercoes=2, 
+				remocoes=3)
+		self.assertEqual(5,c.total_modificado())
+
+class GitCommandoMock:
+	def log_as_array(self):
+		log = list()
+		log.append("e8308a05426ba7ab71cc91f70d8b943ce72b84a4|Nico Steppat|nico.steppat@caelum.com.br|2011-05-14 15:30:56 -0300|Nico Steppat|nico.steppat@ca")
+		log.append("1 files changed, 112 insertions(+), 0 deletions(-)")
+		return log;
+
+
+class CommitFactoryTest(unittest.TestCase):
+
+	def test_gera_um_commit_from_log(self):
+		log = list()
+		log.append("")
+		log.append("e8308a05426ba7ab71cc91f70d8b943ce72b84a4|Nico Steppat|nico.steppat@caelum.com.br|2011-05-14 15:30:56 -0300|Nico Steppat|nico.steppat@caelum.com.br|2011-05-14 15:30:56 -300|Initial commit")
+		log.append("1 files changed, 112 insertions(+), 0 deletions(-)")
+		log.append("")
+		fac = CommitFactory(log)
+		commits = fac.gera_commits()
+		self.assertEqual(1,len(commits))
+
+	def test_gera_nehum_commit_from_log(self):
+		log = list()
+		log.append("")
+		log.append("")
+		fac = CommitFactory(log)
+		commits = fac.gera_commits()
+		self.assertEqual(0,len(commits))
 
 if __name__ == "__main__":
     unittest.main() 

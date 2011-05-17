@@ -26,6 +26,19 @@ class Comando:
 		return self.output
 		
 
+class GitLogComando:
+
+	def linhas(self, options=list()):
+                comandoArray = ['git',
+                                'log',
+                                '--pretty=format:"%H|%an|%ae|%ai|%cn|%ce|%ci|%s"',
+                                "--shortstat",
+                                "--no-merges"]
+                comandoArray.extend(options)
+                print "Executing: %s " % comandoArray
+                comando = Comando(comandoArray)
+                return comando.saida().splitlines();
+
 class Pessoa:
 	#nome = None
 	#email = None
@@ -92,7 +105,10 @@ class Commit:
 	def __str__(self):
                 return " %s, %s" % (self.mensagem, self.autor) 
 
-class CommitsFactory:
+class CommitFactory:
+
+	def __init__(self, log_linhas):
+		self.log_linhas = log_linhas
 
 	def __clean_hash(self,rawHash):
 		return rawHash[1:len(rawHash)]
@@ -113,7 +129,7 @@ class CommitsFactory:
 	def __parse_qtd_remocoes(self, rawString):
 		return int(re.search("\d*",rawString.strip()).group(0))
 
-	def create_commit(self, commitString, statsString):
+	def gera_commit(self, commitString, statsString):
 		commitValues = commitString.split('|')
 		statsValues  = statsString.split(',')
 
@@ -128,32 +144,24 @@ class CommitsFactory:
 			insercoes   = self.__parse_qtd_insercoes(statsValues[1]),
 			remocoes    = self.__parse_qtd_remocoes(statsValues[2]))
 
-	def git_log(self, options=list()):
-		comandoArray = ['git', 
-				'log', 
-				'--pretty=format:"%H|%an|%ae|%ai|%cn|%ce|%ci|%s"', 
-				"--shortstat", 
-				"--no-merges"]
-		comandoArray.extend(options)
-		print "Executing: %s " % comandoArray
-		comando = Comando(comandoArray)
-		return comando.saida().splitlines();
 
-	def commits_from_git_log(self):
-		logLines = self.git_log()
+	def gera_commits(self):
 
 		commits = list()
 
-		while logLines:
-			firstLine = logLines.pop().strip()
-			#print "analyzing: " + firstLine + ", " + str(len(firstLine))
-			if not firstLine: 
-				#print "skiped: " + firstLine
-				firstLine = logLines.pop()
-			secondLine = logLines.pop();
-			#print "CommitStats:  " + firstLine
-			#print "CommitString: " + siecondLine
-			commits.append(self.create_commit(commitString=secondLine, statsString=firstLine))
+		while self.log_linhas:
+			firstLine = self.log_linhas.pop().strip()
+			print "analyzing: " + firstLine + ", " + str(len(firstLine))
+			while not firstLine: #check se a linha for vazia
+				print "skiped: " + firstLine
+				if not len(commits):#nao tem mais elementos
+					break;
+				firstLine = self.log_linhas.pop()
+
+			secondLine = self.log_linhas.pop();
+			print "CommitStats:  " + firstLine
+			print "CommitString: " + secondLine
+			commits.append(self.gera_commit(commitString=secondLine, statsString=firstLine))
 		
 		return commits
 
@@ -204,6 +212,7 @@ def soma_commits_de_cada_autor(commits):
 	stats.append(gera_commit_stats_para_autor(previous, commits_do_autor))
 	return stats
 
+
 def gera_commit_stats_para_autor(autor,commits):
 	qtd_arquivos  = 0
 	qtd_insercoes = 0
@@ -215,6 +224,7 @@ def gera_commit_stats_para_autor(autor,commits):
 		qtd_remocoes  += commit.remocoes
 	commit_statistic = CommitStats(qtd_arquivos, len(commits), qtd_insercoes, qtd_remocoes)
 	return (autor, commit_statistic)			
+
 
 def main():
 	"""
@@ -248,7 +258,8 @@ def main():
 			data = datetime.strptime(arg, "%d/%m/%Y")
 
 	#pega todos os commits do git log
-	commits = CommitsFactory().commits_from_git_log()
+	log_linhas = GitLogComando().linhas()
+	commits = CommitFactory(log_linhas).gera_commits()
 	
 	#check se precisa filtrar pela data
 	if data:
