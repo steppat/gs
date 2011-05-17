@@ -192,16 +192,16 @@ def soma_commits_de_cada_autor(commits):
 
 	stats = list()	
 	commits_do_autor = list()	
-	autor = commits[0].autor
+	previous = commits[0].autor
 
 	for commit in commits:
-		if commit.autor.nome == autor.nome:
-			commits_do_autor.append(commit)
-		else:
-			stats.append(gera_commit_stats_para_autor(autor, commits_do_autor))
-		autor = commit.autor
+		if commit.autor.nome != previous.nome:
+			stats.append(gera_commit_stats_para_autor(previous, commits_do_autor))
+			commits_do_autor = list()
+		previous = commit.autor
+		commits_do_autor.append(commit)
 
-	stats.append(gera_commit_stats_para_autor(autor, commits_do_autor))
+	stats.append(gera_commit_stats_para_autor(previous, commits_do_autor))
 	return stats
 
 def gera_commit_stats_para_autor(autor,commits):
