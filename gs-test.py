@@ -1,5 +1,6 @@
 from gs import Pessoa
 from gs import CommitStats
+from gs import CommitStatsFilter
 from gs import CommitFactory
 from gs import CommitClassification
 from gs import Commit
@@ -20,6 +21,9 @@ def create_commit(nome_autor="nico"):
 			arquivos  = 1, 
 			insercoes = 2, 
 			remocoes  = 3)
+
+def create_commit_stats(total_arquivos, total_commits, total_insercoes, total_remocoes):
+	return CommitStats(total_arquivos, total_commits, total_insercoes, total_remocoes)
 
 class CommitStatsTest(unittest.TestCase):
 
@@ -113,8 +117,18 @@ class CommitClassficationTest(unittest.TestCase):
 		commits.append(create_commit(nome_autor = "johann"))
 		ordenado = CommitClassification(commits).order_by_nome_autor()		
 		self.assertEqual("ana",  ordenado[0].autor.nome)
-		self.assertEqual("nico", ordenado[2].autor.nome)
+		self.assertEqual("nico", ordenado[-1].autor.nome)
 
+class CommitStatsFilterTest(unittest.TestCase):
+	def test_classific_por_commits(self):
+		stats = []
+		stats.append(create_commit_stats(1,1,1,1))
+		stats.append(create_commit_stats(2,2,2,2))
+		stats.append(create_commit_stats(3,3,3,3))
+		stats.append(create_commit_stats(4,4,4,4))
+		ordenado = CommitStatsFilter(stats).order_by_num_modificacoes()
+		self.assertEqual(2, (ordenado[-1].insercoes + ordenado[-1].remocoes))
+		self.assertEqual(8, (ordenado[0].insercoes + ordenado[0].remocoes))
 
 if __name__ == "__main__":
     unittest.main() 

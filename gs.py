@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+# /usr/bin/env python
 # coding=iso-8859-1
 
 import sys
@@ -264,6 +264,13 @@ class CommitClassification:
 	def order_by_nome_autor(self):
 		return sorted(self.commits, key=lambda commit: commit.autor.nome)
 
+class CommitStatsFilter:
+	
+	def __init__(self, autor_stats):
+		self.autor_stats = autor_stats
+
+	def order_by_num_modificacoes(self):
+		return sorted(self.autor_stats, key=lambda autor_stat: autor_stat.total_modificado(), reverse=True)
 
 
 def main():
