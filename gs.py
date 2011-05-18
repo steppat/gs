@@ -270,7 +270,7 @@ class CommitStatsFilter:
 		self.autor_stats = autor_stats
 
 	def order_by_num_modificacoes(self):
-		return sorted(self.autor_stats, key=lambda autor_stat: autor_stat.total_modificado(), reverse=True)
+		return sorted(self.autor_stats, key=lambda autor_stat: autor_stat[1].total_modificado(), reverse=True)
 
 
 def main():
@@ -323,7 +323,8 @@ def main():
 	
 	#ordena commits pelo nome do autor
 	commits = CommitClassification(commits).order_by_nome_autor()
-	commits_stats  = CommitProjection(commits).soma_commits_por_autor()
+	commits_stats = CommitProjection(commits).soma_commits_por_autor()
+	commits_stats = CommitStatsFilter(commits_stats).order_by_num_modificacoes()
 	#resultado = sorted(resultado , key=lambda commit: commit.commit_statistic.total_modificado())
 
 	print "Total commits %d " % len(commits) 
