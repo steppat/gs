@@ -191,7 +191,7 @@ class CommitFilter:
 		self.commits = commits
 
 	#filter todos os autores que comecam com nome_autor
-	def filter_by_autor_names(self, nomes):
+	def filter_by_autor_nomes(self, nomes):
 		temp_list = list()
 		for commit in self.commits:
 			for nome in nomes:
@@ -225,7 +225,7 @@ class CommitProjection:
 
 
 	def soma_commits_por_autor(self):
-		commitsOrdenados = sorted(self.commits, key=lambda commit: commit.autor.nome)
+		commitsOrdenados = CommitClassfication(self.commits).by_autor_nome()
 
 		lista = list()	
 		commits_do_autor = list()	
@@ -253,6 +253,16 @@ class CommitProjection:
 		qtd_remocoes  += commit.remocoes
 		commit_statistic = CommitStats(qtd_arquivos, len(commits_do_autor), qtd_insercoes, qtd_remocoes)
 		return (autor, commit_statistic)			
+
+
+class CommitClassfication:
+	
+	def __init__(self, commits):
+		self.commits = commits
+
+
+	def by_autor_nome(self):
+		return sorted(self.commits, key=lambda commit: commit.autor.nome)
 
 
 def main():
@@ -300,10 +310,10 @@ def main():
 	#check se precisa filtrar pelo nome do autor
 	if nome_autor:
 		nomes = nome_autor.split(',')
-		commits = CommitFilter(commits).filter_by_autor_name(nomes)
+		commits = CommitFilter(commits).filter_by_autor_nome(nomes)
 	
 	#ordena commits pelo nome do autor
-	commits = sorted(commits, key=lambda commit: commit.autor.nome)
+	commits = CommitClassfication(commits).by_autor_nome()
 	commits_stats  = CommitProjection(commits).soma_commits_por_autor()
 	#resultado = sorted(resultado , key=lambda commit: commit.commit_statistic.total_modificado())
 
