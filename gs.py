@@ -63,7 +63,7 @@ class CommitStats:
 		self.remocoes  = remocoes
 
 	"""
-	def create(autor, statsString):
+	def create(autor, commit_stats):
 		return CommitStats(
 			arquivos  = int(re.search("\d*",statsValues[0].strip()).group(0)),
 			insercoes = int(re.search("\d*",statsValues[1].strip()).group(0)),
@@ -77,8 +77,7 @@ class CommitStats:
 
 	
 	def __str__(self):
-		return "Arquivos totais: %d, commits: %d modificoes: %d (+%d,-%d)" % (
-			self.arquivos, 
+		return "commits: %d, modificoes: %d (+%d,-%d)" % (
 			self.commits,
 			self.total_modificado(), 
 			self.insercoes,
@@ -111,10 +110,10 @@ class CommitFactory:
 		self.log_linhas = log_linhas
 
 	def __clean_hash(self,rawHash):
-		return rawHash[1:len(rawHash)]
+		return rawHash[0:len(rawHash)]
 
 	def __clean_msg(self,rawMsg):
-		return rawMsg[0:len(rawMsg)-1] 
+		return rawMsg#rawMsg[0:len(rawMsg)-1] 
 	
 	def __parse_date(self, date):
 		#ignoring timezone, python does not recognize %z option
@@ -129,101 +128,131 @@ class CommitFactory:
 	def __parse_qtd_remocoes(self, rawString):
 		return int(re.search("\d*",rawString.strip()).group(0))
 
-	def gera_commit(self, commitString, statsString):
-		commitValues = commitString.split('|')
-		statsValues  = statsString.split(',')
+	def gera_commit(self, commit_string, commit_stats):
+		commitValues = commit_string.split('|')
+		statsValues  = commit_stats.split(',')
 
 		return Commit(
 			sha_hash    = self.__clean_hash(commitValues[0]),
 			mensagem    = self.__clean_msg(commitValues[7]), 
 			autor       = Pessoa(nome = commitValues[1], email = commitValues[2]), 
 			data_autor  = self.__parse_date(commitValues[3]), 
-			committer   = Pessoa(nome=commitValues[4], email=commitValues[5]), 
+			committer   = Pessoa(nome = commitValues[4], email = commitValues[5]), 
 			data_commit = self.__parse_date(commitValues[6]),
 			arquivos    = self.__parse_qtd_arquivos(statsValues[0]),
 			insercoes   = self.__parse_qtd_insercoes(statsValues[1]),
 			remocoes    = self.__parse_qtd_remocoes(statsValues[2]))
 
 
+	def __has_more_elements(self, lista): 
+		return bool(lista)
+
 	def gera_commits(self):
 
 		commits = list()
 
-		while self.log_linhas:
-			firstLine = self.log_linhas.pop().strip()
-			print "analyzing: " + firstLine + ", " + str(len(firstLine))
-			while not firstLine: #check se a linha for vazia
-				print "skiped: " + firstLine
-				if not len(self.log_linhas):#nao tem mais elementos
-					return list()
-				firstLine = self.log_linhas.pop()
+		while self.__has_more_elements(self.log_linhas):
+			first_line = self.log_linhas.pop()
+			#print "analyzing: " + first_line + ", " + str(len(first_line))
 
-			secondLine = self.log_linhas.pop();
-			print "CommitStats:  " + firstLine
-			print "CommitString: " + secondLine
-			commits.append(self.gera_commit(commitString=secondLine, statsString=firstLine))
+			while String(first_line).is_empty_string():
+				#print "skiping empty line"
+				if not self.__has_more_elements(self.log_linhas):
+					return commits
+				first_line = self.log_linhas.pop()
+
+			second_line = self.log_linhas.pop();
+
+			#print "Commit Stats: %s" % first_line
+			#print "Commit Data:  %s" % second_line
+
+			commit = self.gera_commit(commit_stats = first_line, commit_string = second_line)
+			#print "Appending %s " % commit
+			commits.append(commit)
 		
 		return commits
 
-#filter todos os autores que comecam com nome_autor
-def filter_commits_by_autor_name(commits, nomes):
-	temp_list = list()
-	for commit in commits:
-		for nome in nomes:
-			nome = nome.strip()
-			if commit.autor.nome.lower().startswith(nome.lower()):
-				temp_list.append(commit)
-	return temp_list	
 
-
-def filter_commits_by_date(commits, date):
-	return [commit for commit in commits if commit.data_autor >= date]
-
-
-def soma_todos_commits_stats(commits):
-	total_commits = len(commits)
-	total_arquivos = 0
-	total_insercoes = 0
-	total_remocoes = 0
-	last_commit = None
+class String:
 	
-	for commit in commits:
-		total_arquivos  += commit.arquivos
-		total_insercoes += commit.insercoes
-		total_remocoes  += commit.remocoes
+	def __init__(self, string):
+		self.string = string
 
-	return CommitStats(total_arquivos, total_commits, total_insercoes, total_remocoes)
+	def starts_with_icase(self, outro):
+		return self.string.lower().startswith(outro.lower())
 
-
-def soma_commits_de_cada_autor(commits):
-	commits = sorted(commits, key=lambda commit: commit.autor.nome)
-
-	stats = list()	
-	commits_do_autor = list()	
-	previous = commits[0].autor
-
-	for commit in commits:
-		if commit.autor.nome != previous.nome:
-			stats.append(gera_commit_stats_para_autor(previous, commits_do_autor))
-			commits_do_autor = list()
-		previous = commit.autor
-		commits_do_autor.append(commit)
-
-	stats.append(gera_commit_stats_para_autor(previous, commits_do_autor))
-	return stats
+	def is_empty_string(self):
+		return not self.string.strip()
 
 
-def gera_commit_stats_para_autor(autor,commits):
-	qtd_arquivos  = 0
-	qtd_insercoes = 0
-	qtd_remocoes  = 0
+class CommitFilter:
 
-	for commit in commits:
-		qtd_arquivos  += commit.arquivos 
-		qtd_insercoes += commit.insercoes
+	def __init__(self, commits):
+		self.commits = commits
+
+	#filter todos os autores que comecam com nome_autor
+	def filter_by_autor_names(self, nomes):
+		temp_list = list()
+		for commit in self.commits:
+			for nome in nomes:
+				nome = nome.strip()
+				if String(commit.autor.nome).starts_with_icase(nome):
+					temp_list.append(commit)
+		return temp_list	
+
+
+	def filter_by_date(self, date):
+		return [commit for commit in self.commits if commit.data_autor >= date]
+
+class CommitProjection:
+	
+	def __init__(self, commits):
+		self.commits = commits
+
+	def soma_todas_modificacoes(self):
+		total_commits = len(self.commits)
+		total_arquivos = 0
+		total_insercoes = 0
+		total_remocoes = 0
+		last_commit = None
+	
+		for commit in self.commits:
+			total_arquivos  += commit.arquivos
+			total_insercoes += commit.insercoes
+			total_remocoes  += commit.remocoes
+
+		return CommitStats(total_arquivos, total_commits, total_insercoes, total_remocoes)
+
+
+	def soma_commits_por_autor(self):
+		commitsOrdenados = sorted(self.commits, key=lambda commit: commit.autor.nome)
+
+		lista = list()	
+		commits_do_autor = list()	
+		previous = commitsOrdenados[0].autor
+
+		for commit in commitsOrdenados:
+			if commit.autor.nome != previous.nome:
+				lista.append(self.gera_commit_stats_para_autor(previous, commits_do_autor))
+				commits_do_autor = list()
+			previous = commit.autor
+			commits_do_autor.append(commit)
+
+		lista.append(self.gera_commit_stats_para_autor(previous, commits_do_autor))
+		return lista
+
+
+	def gera_commit_stats_para_autor(self, autor, commits_do_autor):
+		qtd_arquivos  = 0
+		qtd_insercoes = 0
+		qtd_remocoes  = 0
+
+		for commit in commits_do_autor:
+			qtd_arquivos  += commit.arquivos 
+			qtd_insercoes += commit.insercoes
 		qtd_remocoes  += commit.remocoes
-	commit_statistic = CommitStats(qtd_arquivos, len(commits), qtd_insercoes, qtd_remocoes)
-	return (autor, commit_statistic)			
+		commit_statistic = CommitStats(qtd_arquivos, len(commits_do_autor), qtd_insercoes, qtd_remocoes)
+		return (autor, commit_statistic)			
 
 
 def main():
@@ -259,30 +288,29 @@ def main():
 
 	#pega todos os commits do git log
 	log_linhas = GitLogComando().linhas()
+
+	#gera um objeto para cada commit
 	commits = CommitFactory(log_linhas).gera_commits()
 	
 	#check se precisa filtrar pela data
 	if data:
 		print "Filtrando pela data %s" % data
-		commits = filter_commits_by_date(commits, data)
+		commits = CommitFilter(commits).filter_by_date(data)
 
 	#check se precisa filtrar pelo nome do autor
 	if nome_autor:
 		nomes = nome_autor.split(',')
-		commits = filter_commits_by_autor_name(commits, nomes)
+		commits = CommitFilter(commits).filter_by_autor_name(nomes)
 	
 	#ordena commits pelo nome do autor
 	commits = sorted(commits, key=lambda commit: commit.autor.nome)
-	commits_stats  = soma_commits_de_cada_autor(commits)
+	commits_stats  = CommitProjection(commits).soma_commits_por_autor()
 	#resultado = sorted(resultado , key=lambda commit: commit.commit_statistic.total_modificado())
 
 	print "Total commits %d " % len(commits) 
-	#for c in resultado:
-	#	print"Msg: %s, %s, Modificacoes: %d (%d, %d)" % (c.mensagem, c.autor.nome, c.total_modificado(), c.insercoes, c.remocoes)
-
 	print "Total autores %d " % len(commits_stats)
 	for autor_stat in commits_stats:
-		print"Msg: %s, %s" % (autor_stat[0].nome, autor_stat[1])
+		print"Autor: %s, %s" % (autor_stat[0].nome, autor_stat[1])
 
 
 if __name__ == '__main__':
