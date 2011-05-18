@@ -281,6 +281,7 @@ def main():
 		especifico.
 
 		Autor: Nico Steppat
+			   Bernardo Santos
 	"""
 	# parse command line options
 	try:
