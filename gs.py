@@ -225,7 +225,7 @@ class CommitProjection:
 
 
 	def soma_commits_por_autor(self):
-		commitsOrdenados = CommitClassfication(self.commits).by_autor_nome()
+		commitsOrdenados = CommitClassification(self.commits).order_by_nome_autor()
 
 		lista = list()	
 		commits_do_autor = list()	
