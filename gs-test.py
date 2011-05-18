@@ -1,11 +1,25 @@
 from gs import Pessoa
 from gs import CommitStats
 from gs import CommitFactory
+from gs import CommitClassification
 from gs import Commit
 from datetime import datetime
 
 import unittest
 
+def create_commit(nome_autor="nico"):
+	pessoa = Pessoa(nome_autor, "nico@email.com")
+	date = datetime.strptime("01/05/2011 15:30:10", "%d/%m/%Y %H:%M:%S")
+	return Commit(
+			sha_hash = "3a4f5b", 
+			mensagem = "initial commit", 
+			autor = pessoa, 
+			data_autor  = date, 
+			committer   = pessoa,
+			data_commit = date, 
+			arquivos  = 1, 
+			insercoes = 2, 
+			remocoes  = 3)
 
 class CommitStatsTest(unittest.TestCase):
 
@@ -15,31 +29,14 @@ class CommitStatsTest(unittest.TestCase):
 
 
 class CommitTest(unittest.TestCase):
+	
 	def test_commit_soma_modificacoes(self):
-		pessoa = Pessoa("nico", "nico@nico.com")
-		date = datetime.strptime("01/05/2011 15:30:10", "%d/%m/%Y %H:%M:%S")
-		c = Commit(
-				sha_hash="3a4f5b", 
-				mensagem="initial commit", 
-				autor=pessoa, 
-				data_autor=date, 
-				committer=pessoa,
-				data_commit=date, 
-				arquivos=1, 
-				insercoes=2, 
-				remocoes=3)
+		c = create_commit();
 		self.assertEqual(5,c.total_modificado())
 
-class GitCommandoMock:
-	def log_as_array(self):
-		log = list()
-		log.append("e8308a05426ba7ab71cc91f70d8b943ce72b84a4|Nico Steppat|nico.steppat@caelum.com.br|2011-05-14 15:30:56 -0300|Nico Steppat|nico.steppat@ca")
-		log.append("1 files changed, 112 insertions(+), 0 deletions(-)")
-		return log;
 
 
 class CommitFactoryTest(unittest.TestCase):
-
 
 	def __commit_string(self):
 		s = str("e8308a05426ba7ab71cc91f70d8b943ce72b84a4|Nico Steppat|" +
@@ -49,8 +46,6 @@ class CommitFactoryTest(unittest.TestCase):
 
 	def __commit_stats(self):
 		return "1 files changed, 112 insertions(+), 34 deletions(-)"
-		
-	
 
 	def test_gera_um_commit_from_log(self):
 		log = list()
@@ -61,7 +56,6 @@ class CommitFactoryTest(unittest.TestCase):
 		fac = CommitFactory(log)
 		commits = fac.gera_commits()
 		self.assertEqual(1,len(commits))
-
 
 	def test_gera_two_commits_from_log(self):
 		log = list()
@@ -110,6 +104,17 @@ class CommitFactoryTest(unittest.TestCase):
 		self.assertEqual(data, commit.data_commit)
 		self.assertEqual("e8308a05426ba7ab71cc91f70d8b943ce72b84a4", commit.sha_hash)
 		self.assertEqual("Initial commit", commit.mensagem)
+
+class CommitClassficationTest(unittest.TestCase):
+	def test_classifc_pelo_nome(self):
+		commits = list()
+		commits.append(create_commit(nome_autor = "nico"))
+		commits.append(create_commit(nome_autor = "ana"))
+		commits.append(create_commit(nome_autor = "johann"))
+		ordenado = CommitClassification(commits).order_by_nome_autor()		
+		self.assertEqual("ana",  ordenado[0].autor.nome)
+		self.assertEqual("nico", ordenado[2].autor.nome)
+
 
 if __name__ == "__main__":
     unittest.main() 

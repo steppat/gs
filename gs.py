@@ -255,14 +255,15 @@ class CommitProjection:
 		return (autor, commit_statistic)			
 
 
-class CommitClassfication:
+class CommitClassification:
 	
 	def __init__(self, commits):
 		self.commits = commits
 
 
-	def by_autor_nome(self):
+	def order_by_nome_autor(self):
 		return sorted(self.commits, key=lambda commit: commit.autor.nome)
+
 
 
 def main():
@@ -313,7 +314,7 @@ def main():
 		commits = CommitFilter(commits).filter_by_autor_nome(nomes)
 	
 	#ordena commits pelo nome do autor
-	commits = CommitClassfication(commits).by_autor_nome()
+	commits = CommitClassification(commits).order_by_nome_autor()
 	commits_stats  = CommitProjection(commits).soma_commits_por_autor()
 	#resultado = sorted(resultado , key=lambda commit: commit.commit_statistic.total_modificado())
 
