@@ -5,6 +5,7 @@ import sys
 import getopt
 import subprocess
 import re
+from datetime import date
 from datetime import datetime
 
 
@@ -35,7 +36,7 @@ class GitLogComando:
                                 "--shortstat",
                                 "--no-merges"]
                 comandoArray.extend(options)
-                print "Executing: %s " % comandoArray
+                print "Executando comando ... \n %s " % comandoArray
                 comando = Comando(comandoArray)
                 return comando.saida().splitlines();
 
@@ -77,7 +78,7 @@ class CommitStats:
 
 	
 	def __str__(self):
-		return "commits: %d, modificoes: %d (+%d,-%d)" % (
+		return "Commits: %4d, Modificações: %6d (+%d,-%d)" % (
 			self.commits,
 			self.total_modificado(), 
 			self.insercoes,
@@ -293,7 +294,8 @@ def main():
 	
 	# process options
 	nome_autor = None
-	data = None
+	today = datetime.today()
+	data = datetime(today.year, today.month, 1,0,0,0)
 	for op, arg in opts:
 		if op in ("-h", "--help"):
 			print main.__doc__
@@ -303,18 +305,16 @@ def main():
 			nome_autor = arg	
 		if op in ("-d", "--data" ):
 			#print "data: %s " % arg
-			data = datetime.strptime(arg, "%d/%m/%Y")
-
+			data = date.strptime(arg, "%d/%m/%Y")
+	
 	#pega todos os commits do git log
 	log_linhas = GitLogComando().linhas()
 
 	#gera um objeto para cada commit
 	commits = CommitFactory(log_linhas).gera_commits()
 	
-	#check se precisa filtrar pela data
-	if data:
-		print "Filtrando pela data %s" % data
-		commits = CommitFilter(commits).filter_by_date(data)
+	print "\nGerando estatistica a partir %s " % datetime.strftime(data, "%d/%m/%Y")
+	commits = CommitFilter(commits).filter_by_date(data)
 
 	#check se precisa filtrar pelo nome do autor
 	if nome_autor:
@@ -327,10 +327,12 @@ def main():
 	commits_stats = CommitStatsFilter(commits_stats).order_by_num_modificacoes()
 	#resultado = sorted(resultado , key=lambda commit: commit.commit_statistic.total_modificado())
 
-	print "Total commits %d " % len(commits) 
-	print "Total autores %d " % len(commits_stats)
+	#saida
+	print "\nTotal autores: %d " % len(commits_stats)
+	print "Total commits: %d " % len(commits) 
+	print ""
 	for autor_stat in commits_stats:
-		print"Autor: %s, %s" % (autor_stat[0].nome, autor_stat[1])
+		print "{0:30} {1:20}".format(autor_stat[0].nome[0:30], autor_stat[1])
 
 
 if __name__ == '__main__':
