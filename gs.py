@@ -305,7 +305,7 @@ def main():
 			nome_autor = arg	
 		if op in ("-d", "--data" ):
 			#print "data: %s " % arg
-			data = date.strptime(arg, "%d/%m/%Y")
+			data = datetime.strptime(arg, "%d/%m/%Y")
 	
 	#pega todos os commits do git log
 	log_linhas = GitLogComando().linhas()
