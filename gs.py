@@ -286,7 +286,7 @@ def main():
 	"""
 	# parse command line options
 	try:
-		opts, args = getopt.getopt(sys.argv[1:], "had:", ["help", "autor=", "data="])
+		opts, args = getopt.getopt(sys.argv[1:], "hado:", ["help", "autor=", "data=","order-by="])
 	except getopt.error, msg:
 		print msg
 		print "for help use --help"
@@ -296,6 +296,7 @@ def main():
 	nome_autor = None
 	today = datetime.today()
 	data = datetime(today.year, today.month, 1,0,0,0)
+	orderBy = {'autor':False, 'modificacoes':True}
 	for op, arg in opts:
 		if op in ("-h", "--help"):
 			print main.__doc__
@@ -306,7 +307,11 @@ def main():
 		if op in ("-d", "--data" ):
 			#print "data: %s " % arg
 			data = datetime.strptime(arg, "%d/%m/%Y")
-	
+		if op in ("-o", "--order-by"):
+			if arg == "autor":
+				orderBy['modificacoes'] = False
+				orderBy['autor'] = True
+
 	#pega todos os commits do git log
 	log_linhas = GitLogComando().linhas()
 
@@ -322,9 +327,12 @@ def main():
 		commits = CommitFilter(commits).filter_by_autor_nome(nomes)
 	
 	#ordena commits pelo nome do autor
-	commits = CommitClassification(commits).order_by_nome_autor()
 	commits_stats = CommitProjection(commits).soma_commits_por_autor()
-	commits_stats = CommitStatsFilter(commits_stats).order_by_num_modificacoes()
+	
+	if orderBy['autor'] == True: 
+		commits = CommitClassification(commits).order_by_nome_autor()
+	else:
+		commits_stats = CommitStatsFilter(commits_stats).order_by_num_modificacoes()
 	#resultado = sorted(resultado , key=lambda commit: commit.commit_statistic.total_modificado())
 
 	#saida
