@@ -226,7 +226,7 @@ class CommitProjection:
 
 
 	def soma_commits_por_autor(self):
-		commitsOrdenados = CommitClassification(self.commits).order_by_nome_autor()
+		commitsOrdenados = sorted(self.commits, key=lambda commit: commit.autor.nome)#CommitClassification(self.commits).order_by_nome_autor()
 
 		lista = list()	
 		commits_do_autor = list()	
@@ -252,27 +252,23 @@ class CommitProjection:
 			qtd_arquivos  += commit.arquivos 
 			qtd_insercoes += commit.insercoes
 		qtd_remocoes  += commit.remocoes
-		commit_statistic = CommitStats(qtd_arquivos, len(commits_do_autor), qtd_insercoes, qtd_remocoes)
+		commit_statistic = CommitStats(arquivos=qtd_arquivos, commits=len(commits_do_autor), insercoes=qtd_insercoes, remocoes=qtd_remocoes)
 		return (autor, commit_statistic)			
 
-
-class CommitClassification:
 	
-	def __init__(self, commits):
-		self.commits = commits
+class CommitStatsClassification:
 
+	def __init__(self, commit_stats):
+		self.commit_stats = commit_stats
 
 	def order_by_nome_autor(self):
-		return sorted(self.commits, key=lambda commit: commit.autor.nome)
-
-class CommitStatsFilter:
+		return sorted(self.commit_stats, key=lambda autor_stat: autor_stat[0].nome)
 	
-	def __init__(self, autor_stats):
-		self.autor_stats = autor_stats
-
 	def order_by_num_modificacoes(self):
-		return sorted(self.autor_stats, key=lambda autor_stat: autor_stat[1].total_modificado(), reverse=True)
+		return sorted(self.commit_stats, key=lambda commit_stat: commit_stat[1].total_modificado(), reverse=True)
 
+	def order_by_commits(self):
+		return sorted(self.commit_stats, key=lambda autor_stat: autor_stat[1].commits, reverse=True)
 
 def main():
 	"""
@@ -296,7 +292,7 @@ def main():
 	nome_autor = None
 	today = datetime.today()
 	data = datetime(today.year, today.month, 1,0,0,0)
-	orderBy = {'autor':False, 'modificacoes':True}
+	orderBy = {'commit':False, 'autor':False, 'modificacoes':True} #modificacoes:True por default
 	for op, arg in opts:
 		if op in ("-h", "--help"):
 			print main.__doc__
@@ -311,6 +307,16 @@ def main():
 			if arg == "autor":
 				orderBy['modificacoes'] = False
 				orderBy['autor'] = True
+			elif arg == "commit":
+				orderBy['modificacoes'] = False
+				orderBy['commit'] = True
+			elif arg == "modificacoes":
+				orderBy['autor'] = False
+				orderBy['commit'] = False
+				orderBy['modificacoes'] = True
+			else:
+				print "Erro: Argumento inválido!"
+				sys.exit(2)
 
 	#pega todos os commits do git log
 	log_linhas = GitLogComando().linhas()
@@ -330,9 +336,11 @@ def main():
 	commits_stats = CommitProjection(commits).soma_commits_por_autor()
 	
 	if orderBy['autor'] == True: 
-		commits = CommitClassification(commits).order_by_nome_autor()
-	else:
-		commits_stats = CommitStatsFilter(commits_stats).order_by_num_modificacoes()
+		commits_stats = CommitStatsClassification(commits_stats).order_by_nome_autor()
+	elif orderBy['commit'] == True:
+		commits_stats = CommitStatsClassification(commits_stats).order_by_commits()
+	elif orderBy['modificacoes'] == True:
+		commits_stats = CommitStatsClassification(commits_stats).order_by_num_modificacoes()
 	#resultado = sorted(resultado , key=lambda commit: commit.commit_statistic.total_modificado())
 
 	#saida
