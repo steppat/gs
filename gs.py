@@ -261,13 +261,13 @@ class CommitStatsClassification:
 	def __init__(self, commit_stats):
 		self.commit_stats = commit_stats
 
-	def order_by_nome_autor(self):
+	def order_by_autor(self):
 		return sorted(self.commit_stats, key=lambda autor_stat: autor_stat[0].nome)
 	
-	def order_by_num_modificacoes(self):
+	def order_by_modificacoes(self):
 		return sorted(self.commit_stats, key=lambda commit_stat: commit_stat[1].total_modificado(), reverse=True)
 
-	def order_by_commits(self):
+	def order_by_commit(self):
 		return sorted(self.commit_stats, key=lambda autor_stat: autor_stat[1].commits, reverse=True)
 
 def main():
@@ -336,11 +336,11 @@ def main():
 	commits_stats = CommitProjection(commits).soma_commits_por_autor()
 	
 	if orderBy['autor'] == True: 
-		commits_stats = CommitStatsClassification(commits_stats).order_by_nome_autor()
+		commits_stats = CommitStatsClassification(commits_stats).order_by_autor()
 	elif orderBy['commit'] == True:
-		commits_stats = CommitStatsClassification(commits_stats).order_by_commits()
+		commits_stats = CommitStatsClassification(commits_stats).order_by_commit()
 	elif orderBy['modificacoes'] == True:
-		commits_stats = CommitStatsClassification(commits_stats).order_by_num_modificacoes()
+		commits_stats = CommitStatsClassification(commits_stats).order_by_modificacoes()
 	#resultado = sorted(resultado , key=lambda commit: commit.commit_statistic.total_modificado())
 
 	#saida
