@@ -20,7 +20,6 @@ def create_commit(nome_autor="nico"):
 			arquivos  = 1, 
 			insercoes = 2, 
 			remocoes  = 3)
-
 def create_commit_stats(total_arquivos, total_commits, total_insercoes, total_remocoes):
 	autor = Pessoa("nico", "nico@email.com")
 	return (autor, CommitStats(total_arquivos, total_commits, total_insercoes, total_remocoes))
@@ -110,15 +109,37 @@ class CommitFactoryTest(unittest.TestCase):
 		self.assertEqual("Initial commit", commit.mensagem)
 
 class CommitStatsClassificationTest(unittest.TestCase):
-	def test_classific_por_commits(self):
+	def test_classific_por_modificacoes(self):
 		stats = []
 		stats.append(create_commit_stats(1,1,1,1))
 		stats.append(create_commit_stats(2,2,2,2))
 		stats.append(create_commit_stats(3,3,3,3))
 		stats.append(create_commit_stats(4,4,4,4))
-		ordenado = CommitStatsClassification(stats).order_by_num_modificacoes()
+		ordenado = CommitStatsClassification(stats).order_by_modificacoes()
 		self.assertEqual(2, (ordenado[-1][1].insercoes + ordenado[-1][1].remocoes))
 		self.assertEqual(8, (ordenado[0][1].insercoes + ordenado[0][1].remocoes))
+	
+	def test_clasiffic_por_autor(self):
+		stats = []
+		stat1 = create_commit_stats(1,1,1,1)
+		stat1[0].nome = "Bernardo"
+		stats.append(stat1)
+
+		stat2 = create_commit_stats(1,1,1,1)
+		stat2[0].nome = "Nico"
+		stats.append(stat2)
+
+		ordenado = CommitStatsClassification(stats).order_by_autor()
+		self.assertEqual("Bernardo", ordenado[0][0].nome)
+		self.assertEqual("Nico", ordenado[-1][0].nome)
+	
+	def test_classifc_por_commit(self):
+		stats = []
+		stats.append(create_commit_stats(2,2,2,2))
+		stats.append(create_commit_stats(4,4,4,4))
+		ordenado = CommitStatsClassification(stats).order_by_commit()
+		self.assertEqual(4, ordenado[0][1].commits)
+		self.assertEqual(2, ordenado[-1][1].commits)
 
 if __name__ == "__main__":
     unittest.main() 

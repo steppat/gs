@@ -262,12 +262,15 @@ class CommitStatsClassification:
 		self.commit_stats = commit_stats
 
 	def order_by_autor(self):
+		print "Ordenando por autor"
 		return sorted(self.commit_stats, key=lambda autor_stat: autor_stat[0].nome)
 	
 	def order_by_modificacoes(self):
+		print "Ordenando por modificações"
 		return sorted(self.commit_stats, key=lambda commit_stat: commit_stat[1].total_modificado(), reverse=True)
 
 	def order_by_commit(self):
+		print "Ordenando por commit"
 		return sorted(self.commit_stats, key=lambda autor_stat: autor_stat[1].commits, reverse=True)
 
 def main():
@@ -292,7 +295,7 @@ def main():
 	nome_autor = None
 	today = datetime.today()
 	data = datetime(today.year, today.month, 1,0,0,0)
-	orderBy = {'commit':False, 'autor':False, 'modificacoes':True} #modificacoes:True por default
+	order_param = "modificacoes"
 	for op, arg in opts:
 		if op in ("-h", "--help"):
 			print main.__doc__
@@ -304,19 +307,11 @@ def main():
 			#print "data: %s " % arg
 			data = datetime.strptime(arg, "%d/%m/%Y")
 		if op in ("-o", "--order-by"):
-			if arg == "autor":
-				orderBy['modificacoes'] = False
-				orderBy['autor'] = True
-			elif arg == "commit":
-				orderBy['modificacoes'] = False
-				orderBy['commit'] = True
-			elif arg == "modificacoes":
-				orderBy['autor'] = False
-				orderBy['commit'] = False
-				orderBy['modificacoes'] = True
-			else:
+			if not arg in ["autor","commit","modificacoes"]:
 				print "Erro: Argumento inválido!"
 				sys.exit(2)
+			else:
+				order_param = arg
 
 	#pega todos os commits do git log
 	log_linhas = GitLogComando().linhas()
@@ -334,14 +329,8 @@ def main():
 	
 	#ordena commits pelo nome do autor
 	commits_stats = CommitProjection(commits).soma_commits_por_autor()
-	
-	if orderBy['autor'] == True: 
-		commits_stats = CommitStatsClassification(commits_stats).order_by_autor()
-	elif orderBy['commit'] == True:
-		commits_stats = CommitStatsClassification(commits_stats).order_by_commit()
-	elif orderBy['modificacoes'] == True:
-		commits_stats = CommitStatsClassification(commits_stats).order_by_modificacoes()
-	#resultado = sorted(resultado , key=lambda commit: commit.commit_statistic.total_modificado())
+
+	commits_stats = getattr(CommitStatsClassification(commits_stats), "order_by_" + order_param)()
 
 	#saida
 	print "\nTotal autores: %d " % len(commits_stats)
