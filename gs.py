@@ -262,15 +262,12 @@ class CommitStatsClassification:
 		self.commit_stats = commit_stats
 
 	def order_by_autor(self):
-		print "Ordenando por autor"
 		return sorted(self.commit_stats, key=lambda autor_stat: autor_stat[0].nome)
 	
 	def order_by_modificacoes(self):
-		print "Ordenando por modificações"
 		return sorted(self.commit_stats, key=lambda commit_stat: commit_stat[1].total_modificado(), reverse=True)
 
 	def order_by_commit(self):
-		print "Ordenando por commit"
 		return sorted(self.commit_stats, key=lambda autor_stat: autor_stat[1].commits, reverse=True)
 
 def main():

@@ -2,9 +2,9 @@ from gs import Pessoa
 from gs import CommitStats
 from gs import CommitStatsClassification
 from gs import CommitFactory
+from gs import CommitFilter
 from gs import Commit
-from datetime import datetime
-
+from datetime import datetime 
 import unittest
 
 def create_commit(nome_autor="nico"):
@@ -140,6 +140,26 @@ class CommitStatsClassificationTest(unittest.TestCase):
 		ordenado = CommitStatsClassification(stats).order_by_commit()
 		self.assertEqual(4, ordenado[0][1].commits)
 		self.assertEqual(2, ordenado[-1][1].commits)
+
+class CommitFilterTest(unittest.TestCase):
+	def test_filter_by_autor_nomes(self):
+		commits = []
+		commits.append(create_commit("bernardo"))
+		commits.append(create_commit("doni"))
+		commits.append(create_commit("nico"))
+		temp_list = CommitFilter(commits).filter_by_autor_nomes(["bernardo"])
+		self.assertEqual("bernardo", temp_list[0].autor.nome)
+		self.assertEqual(1, len(temp_list))
+
+	def test_filter_by_date(self):
+		commits = []
+		commits.append(create_commit("bernardo"))
+		commits.append(create_commit("doni"))
+		commits.append(create_commit("nico"))
+		commits[0].data_autor = datetime.strptime("20/06/2011 15:30:10", "%d/%m/%Y %H:%M:%S")
+		temp_list = CommitFilter(commits).filter_by_date(datetime(2011, 06, 1,0,0,0))
+		self.assertEqual(1, len(temp_list))
+		self.assertEqual("bernardo", temp_list[0].autor.nome)
 
 if __name__ == "__main__":
     unittest.main() 
