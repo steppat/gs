@@ -229,6 +229,9 @@ class CommitProjection:
 		commitsOrdenados = sorted(self.commits, key=lambda commit: commit.autor.nome)#CommitClassification(self.commits).order_by_nome_autor()
 
 		lista = list()	
+		if not len(commitsOrdenados): 
+			return lista
+
 		commits_do_autor = list()	
 		previous = commitsOrdenados[0].autor
 
