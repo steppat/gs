@@ -330,13 +330,14 @@ Bernardo Santos
 			else:
 				order_param = arg
 
+	print "\nGerando estatistica a partir %s (use -d para alterar a data) \n" % datetime.strftime(data, "%d/%m/%Y")
+	
 	#pega todos os commits do git log
 	log_linhas = GitLogComando().linhas()
 
 	#gera um objeto para cada commit
 	commits = CommitFactory(log_linhas).gera_commits()
 	
-	print "\nGerando estatistica a partir %s " % datetime.strftime(data, "%d/%m/%Y")
 	commits = CommitFilter(commits).filter_by_date(data)
 
 	#check se precisa filtrar pelo nome do autor
