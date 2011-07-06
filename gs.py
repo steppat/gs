@@ -277,8 +277,23 @@ def main():
 	"""
 		Programa executa git log para extrair infos sobre commits. 
 
-		Use --autor="Joao Silva"  ou -a Joao  para procurar por um autor 
-		especifico.
+		Opções:
+			-h / --help:
+				* Exibe documentação do programa. Ex: "gs -h" / "gs --help"
+
+			-d / --data:
+				* Exibe todos os commits a partir da data informada pelo usuário. Ex: "gs -d 10/10/2010" / "gs --data 11/11/2011"
+
+			-a / --autor:
+				* Exibe as informações de um determinado autor, especificado pelo usuário. Ex: "gs -a Joao" / "gs --autor Joao"
+
+
+			-o / --order-by:
+				* Ordena  as informaçöes de acordo com o parâmetro escolhido. Ex: "gs -o autor" / "gs --order-by commit"
+					- Os parâmetros são:
+						+ autor: ordena as informações pelo nome do autor do dos commits (em ordem alfabética).
+						+ commit: ordena as informações pelo número de commits efetuados pelo autor (em ordem decrescente).
+						+ modificacoes: OPÇÃO DEFAULT. ordena as informações pelo número de modificações (soma das linhas adicionadas e removidas) efetuadas pelo autor.
 
 		Autor: Nico Steppat
 			   Bernardo Santos
