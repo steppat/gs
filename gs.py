@@ -279,13 +279,14 @@ Programa executa git log para extrair infos sobre commits.
 
 Opções:
 -d / --data:
-	* Exibe todos os commits a partir da data informada pelo usuário. Ex: "gs -d 10/10/2010" / "gs --data 11/11/2011"
+	* Exibe todos os commits a partir da data informada pelo usuário. Ex: gs -d 10/10/2010 / gs --data 11/11/2011
 
 -a / --autor:
-	* Exibe as informações de um determinado autor, especificado pelo usuário. Ex: "gs -a Joao" / "gs --autor Joao"
+	* Exibe as informações de um determinado autor, especificado pelo usuário. Ex: gs -a Joao / gs --autor Joao
+		+ ATENÇÃO: Se o tiver algum espaço no nome escreva-o entre aspas. Ex: gs -a "Nico Steppat" / gs --autor "Bernardo Santos"
 
 -o / --order-by:
-	* Ordena  as informaçöes de acordo com o parâmetro escolhido. Ex: "gs -o autor" / "gs --order-by commit"
+	* Ordena  as informaçöes de acordo com o parâmetro escolhido. Ex: gs -o autor / gs --order-by commit
 
 	- Os parâmetros são:
 		+ autor: ordena as informações pelo nome do autor do dos commits (em ordem alfabética).
@@ -293,7 +294,7 @@ Opções:
 		+ modificacoes: OPÇÃO DEFAULT. ordena as informações pelo número de modificações (soma das linhas adicionadas e removidas) efetuadas pelo autor.
 
 -h / --help:
-	* Exibe documentação do programa. Ex: "python gs -h" / "python gs --help"
+	* Exibe documentação do programa. Ex: python gs -h / python gs --help
 
 
 Autores: 
@@ -321,8 +322,8 @@ Bernardo Santos
 			print "autor: %s " % arg
 			nome_autor = arg	
 		if op in ("-d", "--data" ):
-			print "data: %s " % arg 
-			print "data: %s " % op
+			#print "data: %s " % arg 
+			#print "data: %s " % op
 			data = datetime.strptime(arg, "%d/%m/%Y")
 		if op in ("-o", "--order-by"):
 			if not arg in ["autor","commit","modificacoes"]:
@@ -344,7 +345,7 @@ Bernardo Santos
 	#check se precisa filtrar pelo nome do autor
 	if nome_autor:
 		nomes = nome_autor.split(',')
-		commits = CommitFilter(commits).filter_by_autor_nome(nomes)
+		commits = CommitFilter(commits).filter_by_autor_nomes(nomes)
 	
 	#ordena commits pelo nome do autor
 	commits_stats = CommitProjection(commits).soma_commits_por_autor()
