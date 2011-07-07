@@ -302,7 +302,7 @@ Bernardo Santos
 	"""
 	# parse command line options
 	try:
-		opts, args = getopt.getopt(sys.argv[1:], "hado:", ["help", "autor=", "data=","order-by="])
+		opts, args = getopt.getopt(sys.argv[1:], "ha:d:o:", ["help", "autor=", "data=","order-by="])
 	except getopt.error, msg:
 		print msg
 		print "for help use --help"
@@ -318,10 +318,11 @@ Bernardo Santos
 			print main.__doc__
 			sys.exit(0)
 		if op in ("-a", "--autor" ):
-			#print "autor: %s " % arg
+			print "autor: %s " % arg
 			nome_autor = arg	
 		if op in ("-d", "--data" ):
-			#print "data: %s " % arg
+			print "data: %s " % arg 
+			print "data: %s " % op
 			data = datetime.strptime(arg, "%d/%m/%Y")
 		if op in ("-o", "--order-by"):
 			if not arg in ["autor","commit","modificacoes"]:
