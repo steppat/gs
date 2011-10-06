@@ -205,6 +205,9 @@ class CommitFilter:
 	def filter_by_date(self, date):
 		return [commit for commit in self.commits if commit.data_autor >= date]
 
+	def filter_by_month(self, date_inicio, date_final):
+		return [commit for commit in self.commits if commit.data_autor >= date_inicio and commit.data_autor <= date_final]
+
 class CommitProjection:
 	
 	def __init__(self, commits):
@@ -273,6 +276,30 @@ class CommitStatsClassification:
 	def order_by_commit(self):
 		return sorted(self.commit_stats, key=lambda autor_stat: autor_stat[1].commits, reverse=True)
 
+class MonthClassification:
+
+	def __init__(self, mes_inicio_arg):
+		self.mes_inicio = int(mes_inicio_arg)
+		self.ano_inicio = date.today().year
+		self.mes_final, self.ano_final = self.verifica_mes() 
+		self.dia = 1
+	
+	def verifica_mes(self):
+		if self.mes_inicio > 12 or self.mes_inicio < 1:
+			print "Erro: O valor do mes deve estar entre 1 e 12."
+			sys.exit(2)
+		elif self.mes_inicio == 12:
+			return (1, self.ano_inicio + 1)
+		elif self.mes_inicio < 12:
+			return (self.mes_inicio + 1, self.ano_inicio)
+
+	def devolve_datas(self):
+		data_inicio_str ="%.2d/%.2d/%.4d" % (self.dia, self.mes_inicio, self.ano_inicio)
+		data_final_str = "%.2d/%.2d/%.4d" % (self.dia, self.mes_final, self.ano_final)
+
+		return (datetime.strptime(data_inicio_str,"%d/%m/%Y"), datetime.strptime(data_final_str,"%d/%m/%Y"))
+
+	
 def main():
 	"""
 Programa executa git log para extrair infos sobre commits. 
@@ -280,6 +307,8 @@ Programa executa git log para extrair infos sobre commits.
 Opções:
 -d / --data:
 	* Exibe todos os commits a partir da data informada pelo usuário. Ex: gs -d 10/10/2010 / gs --data 11/11/2011
+-m / --mes:
+	* Exibe todos os commits do primeiro dia do mês ,equivalente ao número passado pelo usuário, até o dia primeiro do próximo mês do ano atual. O parâmetro deve ser um número entre 1 e 12, sendo este número equivalente ao mês desejado (1: Janeiro, 2:Fevereiro, etc...). Ex: gs -m 4 / gs --mes 4 (Mostrará todas os commits do mês de abril)
 
 -a / --autor:
 	* Exibe as informações de um determinado autor, especificado pelo usuário. Ex: gs -a Joao / gs --autor Joao
@@ -303,7 +332,7 @@ Bernardo Santos
 	"""
 	# parse command line options
 	try:
-		opts, args = getopt.getopt(sys.argv[1:], "ha:d:o:", ["help", "autor=", "data=","order-by="])
+		opts, args = getopt.getopt(sys.argv[1:], "ha:d:o:m:", ["help", "autor=", "data=","order-by=","mes="])
 	except getopt.error, msg:
 		print msg
 		print "for help use --help"
@@ -314,6 +343,7 @@ Bernardo Santos
 	today = datetime.today()
 	data = datetime(today.year, today.month, 1,0,0,0)
 	order_param = "modificacoes"
+	filtrar_por_mes = False
 	for op, arg in opts:
 		if op in ("-h", "--help"):
 			print main.__doc__
@@ -325,14 +355,15 @@ Bernardo Santos
 			#print "data: %s " % arg 
 			#print "data: %s " % op
 			data = datetime.strptime(arg, "%d/%m/%Y")
+		if op in ("-m","--mes"):
+			data_inicio, data_final = MonthClassification(arg).devolve_datas()
+			filtrar_por_mes = True
 		if op in ("-o", "--order-by"):
 			if not arg in ["autor","commit","modificacoes"]:
 				print "Erro: Argumento inválido!"
 				sys.exit(2)
 			else:
 				order_param = arg
-
-	print "\nGerando estatistica a partir %s (use -d para alterar a data) \n" % datetime.strftime(data, "%d/%m/%Y")
 	
 	#pega todos os commits do git log
 	log_linhas = GitLogComando().linhas()
@@ -340,7 +371,12 @@ Bernardo Santos
 	#gera um objeto para cada commit
 	commits = CommitFactory(log_linhas).gera_commits()
 	
-	commits = CommitFilter(commits).filter_by_date(data)
+	if filtrar_por_mes == True: 
+		print "\nGerando estatistica a partir de %s (use -d para alterar a data) até %s \n" % (datetime.strftime(data_inicio,"%d/%m/%Y"), datetime.strftime(data_final,"%d/%m/%Y"))
+		commits = CommitFilter(commits).filter_by_month(data_inicio, data_final)
+	else:
+		print "\nGerando estatistica a partir de %s (use -d para alterar a data) \n" % datetime.strftime(data, "%d/%m/%Y")
+		commits = CommitFilter(commits).filter_by_date(data)
 
 	#check se precisa filtrar pelo nome do autor
 	if nome_autor:

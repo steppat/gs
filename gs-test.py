@@ -4,6 +4,7 @@ from gs import CommitStatsClassification
 from gs import CommitFactory
 from gs import CommitFilter
 from gs import Commit
+from gs import MonthClassification
 from datetime import datetime 
 import unittest
 
@@ -160,6 +161,29 @@ class CommitFilterTest(unittest.TestCase):
 		temp_list = CommitFilter(commits).filter_by_date(datetime(2011, 06, 1,0,0,0))
 		self.assertEqual(1, len(temp_list))
 		self.assertEqual("bernardo", temp_list[0].autor.nome)
+
+	def test_filter_by_month(self):
+		commits = []
+		commits.append(create_commit("bernardo"))
+		commits.append(create_commit("nico"))
+		commits[0].data_autor = datetime.strptime("04/04/2011", "%d/%m/%Y")
+		commits[1].data_autor = datetime.strptime("20/04/2011", "%d/%m/%Y")
+
+		mes_inicio = 4
+		data_inicio, data_final = MonthClassification(mes_inicio).devolve_datas()
+		temp_list = CommitFilter(commits).filter_by_month(data_inicio, data_final)
+		
+		self.assertEqual(2, len(temp_list))
+		self.assertEqual("bernardo", temp_list[0].autor.nome)
+		self.assertEqual("nico", temp_list[1].autor.nome)
+
+class MonthClassificationTest(unittest.TestCase):
+	def test_devolve_datas(self):
+		mes = 4
+		data_inicial = datetime.strptime("01/04/2011", "%d/%m/%Y")
+		data_final = datetime.strptime("01/05/2011", "%d/%m/%Y")
+		self.assertEqual((data_inicial,data_final), MonthClassification(mes).devolve_datas())
+
 
 if __name__ == "__main__":
     unittest.main() 
